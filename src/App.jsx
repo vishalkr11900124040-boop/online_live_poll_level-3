@@ -252,16 +252,21 @@ function App() {
   const [lastSyncedAt, setLastSyncedAt] = useState(null)
   const [transaction, setTransaction] = useState({ phase: 'idle' })
   const [recentEvents, setRecentEvents] = useState([])
-
-  const eventCursorRef = useRef(null)
+const eventCursorRef = useRef(null)
   const refreshPollStateRef = useRef(null)
   const syncFromEventsRef = useRef(null)
   const dismissSelectedPollRef = useRef(null)
   const deferredSearch = useDeferredValue(searchQuery)
 
-  const selectedPoll = useMemo(
-    () => polls.find((poll) => poll.id === selectedPollId) || null,
-    [polls, selectedPollId],
+  const createPollAction = useMemo(
+    () =>
+      getCreatePollActionState({
+        walletAddress: wallet?.address,
+        transactionPhase: transaction.phase,
+        isWalletBusy,
+      }),
+    [isWalletBusy, transaction.phase, wallet?.address],
+
   )
 
   const createPollAction = useMemo(
