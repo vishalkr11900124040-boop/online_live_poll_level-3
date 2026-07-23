@@ -32,30 +32,17 @@ const EMPTY_FORM = {
 const DURATION_PRESETS = [5, 15, 30, 60, 180, 1440]
 
 function shortenAddress(address) {
-  if (!address) {
-    return 'Not connected'
-  }
-
+  if (!address) return 'Not connected'
   return `${address.slice(0, 6)}...${address.slice(-6)}`
 }
 
 function formatDateTime(timestamp) {
-  if (!timestamp) {
-    return 'Waiting for sync'
-  }
-
-  if (typeof timestamp === 'string') {
-    return new Date(timestamp).toLocaleString()
-  }
-
+  if (!timestamp) return 'Waiting for sync'
   return new Date(timestamp).toLocaleString()
 }
 
 function formatEventTime(timestamp) {
-  if (!timestamp) {
-    return 'Pending ledger timestamp'
-  }
-
+  if (!timestamp) return 'Pending ledger timestamp'
   return new Date(timestamp).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
@@ -65,22 +52,14 @@ function formatEventTime(timestamp) {
 
 function formatTimeLeft(expiresAt) {
   const diff = expiresAt - Date.now()
-  if (diff <= 0) {
-    return 'Closed'
-  }
+  if (diff <= 0) return 'Closed'
 
   const minutes = Math.floor(diff / 60000)
   const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
 
-  if (days > 0) {
-    return `${days}d ${hours % 24}h left`
-  }
-
-  if (hours > 0) {
-    return `${hours}h ${minutes % 60}m left`
-  }
-
+  if (days > 0) return `${days}d ${hours % 24}h left`
+  if (hours > 0) return `${hours}h ${minutes % 60}m left`
   return `${minutes}m left`
 }
 
@@ -109,7 +88,7 @@ function getVoteActionState({ poll, walletAddress, hasVoted, transactionPhase, i
     }
   }
 
-  if (transactionPhase === 'preparing' || transactionPhase === 'awaiting-signature' || transactionPhase === 'pending') {
+  if (['preparing', 'awaiting-signature', 'pending'].includes(transactionPhase)) {
     return {
       label: 'Submitting...',
       disabled: true,
@@ -133,11 +112,7 @@ function getCreatePollActionState({ walletAddress, transactionPhase, isWalletBus
     }
   }
 
-  if (
-    transactionPhase === 'preparing' ||
-    transactionPhase === 'awaiting-signature' ||
-    transactionPhase === 'pending'
-  ) {
+  if (['preparing', 'awaiting-signature', 'pending'].includes(transactionPhase)) {
     return {
       label: 'Submitting...',
       disabled: true,
@@ -221,8 +196,7 @@ function classifyError(error) {
   if (message.includes('account not found')) {
     return {
       title: 'Testnet wallet not funded',
-      message:
-        'This wallet address does not exist on Stellar testnet yet. Fund it with Friendbot before sending contract transactions.',
+      message: 'This wallet address does not exist on Stellar testnet yet. Fund it with Friendbot before sending contract transactions.',
     }
   }
 
@@ -293,6 +267,7 @@ function App() {
   const selectedPollTotalVotes = selectedPoll
     ? selectedPoll.votes.reduce((sum, vote) => sum + vote, 0)
     : 0
+
   const createPollAction = useMemo(
     () =>
       getCreatePollActionState({
@@ -304,21 +279,14 @@ function App() {
   )
 
   const visiblePolls = useMemo(() => {
-    const filtered = polls
+    return polls
       .filter((poll) => {
         const state = getPollState(poll)
-        if (filter === 'active' && state !== 'active') {
-          return false
-        }
-
-        if (filter === 'closed' && state !== 'closed') {
-          return false
-        }
+        if (filter === 'active' && state !== 'active') return false
+        if (filter === 'closed' && state !== 'closed') return false
 
         const query = deferredSearch.trim().toLowerCase()
-        if (!query) {
-          return true
-        }
+        if (!query) return true
 
         return (
           poll.question.toLowerCase().includes(query) ||
@@ -331,19 +299,10 @@ function App() {
           const rightVotes = right.votes.reduce((sum, vote) => sum + vote, 0)
           return rightVotes - leftVotes
         }
-
-        if (sortBy === 'newest') {
-          return right.createdAt - left.createdAt
-        }
-
-        if (sortBy === 'oldest') {
-          return left.createdAt - right.createdAt
-        }
-
+        if (sortBy === 'newest') return right.createdAt - left.createdAt
+        if (sortBy === 'oldest') return left.createdAt - right.createdAt
         return left.expiresAt - right.expiresAt
       })
-
-    return filtered
   }, [deferredSearch, filter, polls, sortBy])
 
   const stats = useMemo(() => {
@@ -353,18 +312,11 @@ function App() {
       0,
     )
 
-    return {
-      totalPolls: polls.length,
-      activePolls,
-      totalVotes,
-    }
+    return { totalPolls: polls.length, activePolls, totalVotes }
   }, [polls])
 
   useEffect(() => {
-    if (!notice) {
-      return undefined
-    }
-
+    if (!notice) return undefined
     const timer = window.setTimeout(() => setNotice(null), 5000)
     return () => window.clearTimeout(timer)
   }, [notice])
@@ -392,16 +344,13 @@ function App() {
     if (!CONTRACT_ID) {
       setBootError({
         title: 'Contract configuration missing',
-        message:
-          'Add VITE_STELLAR_CONTRACT_ID to your frontend env so the app can read and write to the deployed poll contract.',
+        message: 'Add VITE_STELLAR_CONTRACT_ID to your environment variables so the app can sync on-chain state.',
       })
       setIsBooting(false)
       return
     }
 
-    if (!silent) {
-      setIsRefreshing(true)
-    }
+    if (!silent) setIsRefreshing(true)
 
     try {
       const readAddress = await ensureReadAccount()
@@ -425,9 +374,7 @@ function App() {
     } catch (error) {
       const parsed = classifyError(error)
       setBootError(parsed)
-      if (!silent) {
-        showNotice('error', parsed.title, parsed.message)
-      }
+      if (!silent) showNotice('error', parsed.title, parsed.message)
     } finally {
       setIsBooting(false)
       setIsRefreshing(false)
@@ -435,9 +382,7 @@ function App() {
   }
 
   async function syncFromEvents() {
-    if (!CONTRACT_ID) {
-      return
-    }
+    if (!CONTRACT_ID) return
 
     try {
       const eventBatch = await fetchContractEvents(eventCursorRef.current)
@@ -448,7 +393,7 @@ function App() {
         await refreshPollState({ silent: true })
       }
     } catch {
-      // Background event polling should not interrupt the main UX.
+      // Background event sync errors ignore silent failures
     }
   }
 
@@ -462,33 +407,25 @@ function App() {
     const timer = window.setTimeout(() => {
       refreshPollStateRef.current?.()
     }, 0)
-
     return () => window.clearTimeout(timer)
   }, [selectedPollId, wallet?.address])
 
   useEffect(() => {
-    if (!CONTRACT_ID) {
-      return undefined
-    }
-
+    if (!CONTRACT_ID) return undefined
     const interval = window.setInterval(() => {
       syncFromEventsRef.current?.()
     }, 5000)
-
     return () => window.clearInterval(interval)
   }, [selectedPollId, wallet?.address])
 
   useEffect(() => {
     const syncSelectedPollFromHash = () => {
       const pollId = parsePollHash(window.location.hash)
-      if (pollId) {
-        setSelectedPollId(pollId)
-      }
+      if (pollId) setSelectedPollId(pollId)
     }
 
     syncSelectedPollFromHash()
     window.addEventListener('hashchange', syncSelectedPollFromHash)
-
     return () => window.removeEventListener('hashchange', syncSelectedPollFromHash)
   }, [])
 
@@ -502,9 +439,7 @@ function App() {
     document.body.style.overflow = 'hidden'
 
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        dismissSelectedPollRef.current?.()
-      }
+      if (event.key === 'Escape') dismissSelectedPollRef.current?.()
     }
     window.addEventListener('keydown', handleKeyDown)
 
@@ -519,11 +454,7 @@ function App() {
   }
 
   function clearPollHash() {
-    window.history.replaceState(
-      null,
-      '',
-      `${window.location.pathname}${window.location.search}`,
-    )
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
   }
 
   function openPollDetails(pollId) {
@@ -538,14 +469,13 @@ function App() {
 
   async function handleConnectWallet() {
     setIsWalletBusy(true)
-
     try {
       const connectedWallet = await connectWallet()
       setWallet(connectedWallet)
       showNotice(
         'success',
         'Wallet connected',
-        `${connectedWallet.walletName} is ready to create polls and sign votes on testnet.`,
+        `${connectedWallet.walletName} is ready to create polls and sign votes on Stellar Testnet.`,
       )
     } catch (error) {
       handleFailure(error)
@@ -558,7 +488,7 @@ function App() {
     await disconnectWallet()
     setWallet(null)
     setVoteLookup({})
-    showNotice('info', 'Wallet disconnected', 'You can still read polls while disconnected.')
+    showNotice('info', 'Wallet disconnected', 'Browsing in read-only mode.')
   }
 
   function updateTransactionStatus(update) {
@@ -566,16 +496,13 @@ function App() {
   }
 
   async function handleMenuDeletePoll(pollId) {
-    if (!window.confirm(`Delete poll #${pollId}? This removes it from the contract and stored cache.`)) {
-      return
-    }
-
+    if (!window.confirm(`Delete poll #${pollId}? This will remove it from the contract.`)) return
     await handleDeletePoll(pollId)
   }
 
   async function runContractWrite(method, args, successTitle, successMessage) {
     if (!wallet?.address) {
-      showNotice('error', 'Wallet required', 'Connect a Stellar wallet before sending a contract transaction.')
+      showNotice('error', 'Wallet required', 'Connect a Stellar wallet before sending on-chain transactions.')
       return false
     }
 
@@ -602,7 +529,7 @@ function App() {
     const options = form.options.map((option) => option.trim()).filter(Boolean)
 
     if (!question) {
-      setFormError('Enter a poll question before creating it on-chain.')
+      setFormError('Please enter a question.')
       return
     }
 
@@ -622,54 +549,46 @@ function App() {
         duration_minutes: form.duration,
       },
       'Poll created',
-      'Your poll was deployed to the contract and will appear after the next sync.',
+      'Your poll was deployed on-chain and will refresh automatically.',
     )
 
-    if (created) {
-      setForm(EMPTY_FORM)
-    }
+    if (created) setForm(EMPTY_FORM)
   }
 
   async function handleVote(pollId, optionIndex) {
-    const walletAddress = wallet?.address
-
     await runContractWrite(
       'vote',
       {
-        voter: walletAddress,
+        voter: wallet?.address,
         poll_id: pollId,
         option_index: optionIndex,
       },
       'Vote submitted',
-      'Your vote was written to the contract and the UI is syncing the latest totals.',
+      'Your vote was written to the contract.',
     )
   }
 
   async function handleClosePoll(pollId) {
-    const walletAddress = wallet?.address
-
     await runContractWrite(
       'close_poll',
       {
         poll_id: pollId,
-        caller: walletAddress,
+        caller: wallet?.address,
       },
       'Poll closed',
-      'The contract marked this poll as inactive.',
+      'The contract marked this poll as closed.',
     )
   }
 
   async function handleDeletePoll(pollId) {
-    const walletAddress = wallet?.address
-
     const deleted = await runContractWrite(
       'delete_poll',
       {
         poll_id: pollId,
-        caller: walletAddress,
+        caller: wallet?.address,
       },
       'Poll deleted',
-      'The contract removed this poll and the UI is syncing the latest list.',
+      'The contract removed this poll.',
     )
 
     if (deleted) {
@@ -724,14 +643,14 @@ function App() {
           <div className="brand-mark" aria-hidden="true">LP</div>
           <div>
             <h1>LivePoll</h1>
-            <p>On-chain polls on Stellar Testnet — create, vote, and track results in real time.</p>
+            <p>Soroban On-Chain Polls on Stellar Testnet</p>
           </div>
         </div>
 
         <div className="topbar-actions">
           <div className="network-pill">
             <span className="status-dot" />
-            {NETWORK_PASSPHRASE === 'Test SDF Network ; September 2015' ? 'Testnet' : 'Custom network'}
+            {NETWORK_PASSPHRASE === 'Test SDF Network ; September 2015' ? 'Testnet' : 'Custom Network'}
           </div>
 
           {wallet ? (
@@ -739,42 +658,16 @@ function App() {
               className="secondary-button wallet-disconnect-button"
               onClick={handleDisconnectWallet}
               type="button"
-              aria-label={`Disconnect wallet ${wallet.address}`}
             >
               <span className="wallet-disconnect-copy">
-                <span className="wallet-disconnect-status">Wallet connected</span>
+                <span className="wallet-disconnect-status">Connected</span>
                 <span className="wallet-disconnect-address">{shortenAddress(wallet.address)}</span>
-              </span>
-              <span className="disconnect-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                  <path
-                    d="M14 7V5a2 2 0 0 0-2-2H5A2 2 0 0 0 3 5v14a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M10 12h11m-4-4 4 4-4 4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
               </span>
               <span className="wallet-disconnect-label">Disconnect</span>
             </button>
           ) : (
             <button className="primary-button" onClick={handleConnectWallet} disabled={isWalletBusy}>
-              {isWalletBusy ? 'Opening wallets...' : 'Connect wallet'}
-            </button>
-          )}
-          {selectedPollId && (
-            <button className="ghost-button small" onClick={dismissSelectedPoll} type="button">
-              Close selected poll
+              {isWalletBusy ? 'Opening Wallets...' : 'Connect Wallet'}
             </button>
           )}
         </div>
@@ -798,11 +691,10 @@ function App() {
         <section className="hero-grid">
           <article className="panel hero-card">
             <div>
-              <p className="section-label">Supported wallets</p>
-              <h2>Connect any Stellar wallet to vote</h2>
+              <p className="section-label">Supported Wallets</p>
+              <h2>Stellar Wallets Integration</h2>
               <p>
-                Works with {SUPPORTED_WALLET_NAMES.length}+ wallets via StellarWalletsKit.
-                Create polls, cast votes, and close polls directly from the browser.
+                Connect with {SUPPORTED_WALLET_NAMES.length}+ wallets via StellarWalletsKit to sign transactions.
               </p>
             </div>
 
@@ -817,7 +709,7 @@ function App() {
 
           <article className="panel status-card">
             <div className="status-card-top">
-              <p className="section-label">Transaction status</p>
+              <p className="section-label">Transaction Status</p>
               <span className={`phase-badge ${transaction.phase}`}>{transaction.phase}</span>
             </div>
             <p className="status-message">{getTransactionCopy(transaction)}</p>
@@ -829,7 +721,7 @@ function App() {
                 target="_blank"
                 rel="noreferrer"
               >
-                View transaction on Stellar Expert
+                View on StellarExpert
               </a>
             )}
 
@@ -839,39 +731,31 @@ function App() {
                 <dd>{RPC_URL}</dd>
               </div>
               <div>
-                <dt>Contract</dt>
-                <dd>{CONTRACT_ID || 'Add VITE_STELLAR_CONTRACT_ID'}</dd>
+                <dt>Contract ID</dt>
+                <dd>{CONTRACT_ID ? `${CONTRACT_ID.slice(0, 8)}...` : 'Not Set'}</dd>
               </div>
               <div>
-                <dt>Last sync</dt>
+                <dt>Last Sync</dt>
                 <dd>{formatDateTime(lastSyncedAt)}</dd>
-              </div>
-              <div>
-                <dt>Selected poll</dt>
-                <dd>
-                  {selectedPoll
-                    ? `${selectedPollState || 'unknown'} · ${selectedPollTotalVotes} vote${selectedPollTotalVotes !== 1 ? 's' : ''}`
-                    : 'None selected'}
-                </dd>
               </div>
             </dl>
           </article>
         </section>
 
         <section className="stats-grid">
-          <StatCard label="Total polls" value={stats.totalPolls} />
-          <StatCard label="Active polls" value={stats.activePolls} />
-          <StatCard label="Total votes" value={stats.totalVotes} />
+          <StatCard label="Total Polls" value={stats.totalPolls} />
+          <StatCard label="Active Polls" value={stats.activePolls} />
+          <StatCard label="Total Votes" value={stats.totalVotes} />
         </section>
 
         <section className="workspace-grid">
+          {/* Create Poll Panel */}
           <article className="panel compose-panel">
             <div className="panel-head">
               <div>
-                <p className="section-label">Create a poll</p>
-                <h3>Ask the community something</h3>
+                <p className="section-label">New Poll</p>
+                3<h3>Create On-Chain Poll</h3>
               </div>
-              <span className="panel-meta">{wallet ? shortenAddress(wallet.address) : 'Wallet required'}</span>
             </div>
 
             <label className="field">
@@ -879,8 +763,8 @@ function App() {
               <textarea
                 value={form.question}
                 onChange={(event) => setForm((current) => ({ ...current, question: event.target.value }))}
-                placeholder="What should the community vote on?"
-                rows={4}
+                placeholder="What is your question?"
+                rows={3}
               />
             </label>
 
@@ -888,21 +772,25 @@ function App() {
               <span>Options</span>
               <div className="option-stack">
                 {form.options.map((option, index) => (
-                  <div key={`${index}-${form.options.length}`} className="option-row">
+                  <div key={index} className="option-row">
                     <input
                       value={option}
                       onChange={(event) => updateOption(index, event.target.value)}
                       placeholder={`Option ${index + 1}`}
                     />
-                    <button className="icon-button" onClick={() => removeOption(index)} type="button">
-                      Remove
-                    </button>
+                    {form.options.length > 2 && (
+                      <button className="icon-button" onClick={() => removeOption(index)} type="button">
+                        ✕
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
-              <button className="ghost-button" onClick={addOption} type="button">
-                Add option
-              </button>
+              {form.options.length < 6 && (
+                <button className="ghost-button" onClick={addOption} type="button">
+                  + Add Option
+                </button>
+              )}
             </div>
 
             <div className="field">
@@ -930,9 +818,7 @@ function App() {
               <button
                 className="primary-button"
                 onClick={() =>
-                  createPollAction.action === 'connect'
-                    ? handleConnectWallet()
-                    : handleCreatePoll()
+                  createPollAction.action === 'connect' ? handleConnectWallet() : handleCreatePoll()
                 }
                 disabled={createPollAction.disabled}
                 type="button"
@@ -942,45 +828,21 @@ function App() {
             </div>
           </article>
 
+          {/* Sync & Events Feed Panel */}
           <article className="panel sync-panel">
             <div className="panel-head">
               <div>
-                <p className="section-label">Live sync</p>
-                <h3>Contract activity</h3>
+                <p className="section-label">Real-Time Sync</p>
+                <h3>On-Chain Activity</h3>
               </div>
               <button className="secondary-button" onClick={() => refreshPollState()} type="button">
-                {isRefreshing || isBooting ? 'Refreshing...' : 'Refresh now'}
+                {isRefreshing || isBooting ? 'Syncing...' : 'Refresh'}
               </button>
             </div>
 
-            <ul className="sync-list">
-              <li>Source of truth: deployed Soroban contract state</li>
-              <li>Real-time updates: contract event polling every 5 seconds</li>
-              <li>Error handling: wallet missing, wallet rejected, insufficient balance</li>
-              <li>Wallet mode: {wallet ? `${wallet.walletName} connected` : 'read-only browsing'}</li>
-            </ul>
-
-            {CONTRACT_ID && (
-              <a
-                className="inline-link"
-                href={getExplorerLink('contract', CONTRACT_ID)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open contract on Stellar Expert
-              </a>
-            )}
-
             <div className="event-feed">
-              <div className="event-feed-head">
-                <p className="section-label">Recent contract events</p>
-                <span className="panel-meta">{recentEvents.length} tracked</span>
-              </div>
-
               {recentEvents.length === 0 ? (
-                <p className="event-empty">
-                  Waiting for new create, vote, close, or delete events from testnet.
-                </p>
+                <p className="event-empty">Listening for contract events...</p>
               ) : (
                 <div className="event-list">
                   {recentEvents.map((event) => (
@@ -990,31 +852,12 @@ function App() {
                           <strong>{event.title}</strong>
                           <p>{event.summary}</p>
                         </div>
-                        <span
-                          className={`state-pill ${
-                            event.action === 'close' || event.action === 'delete'
-                              ? 'closed'
-                              : 'active'
-                          }`}
-                        >
-                          {event.action}
-                        </span>
+                        <span className={`state-pill ${event.action}`}>{event.action}</span>
                       </div>
-
                       <div className="event-meta">
-                        <span>Poll #{event.pollId}</span>
                         <span>Ledger {event.ledger}</span>
                         <span>{formatEventTime(event.ledgerClosedAt)}</span>
                       </div>
-
-                      <a
-                        className="inline-link"
-                        href={getExplorerLink('tx', event.txHash)}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        View event transaction
-                      </a>
                     </article>
                   ))}
                 </div>
@@ -1023,17 +866,18 @@ function App() {
           </article>
         </section>
 
+        {/* Poll List Feed */}
         <section className="panel poll-panel">
           <div className="controls-head">
             <div>
-              <p className="section-label">Poll feed</p>
-              <h3>Browse &amp; vote on polls</h3>
+              <p className="section-label">Live Feed</p>
+              <h3>Active &amp; Closed Polls</h3>
             </div>
 
             <div className="control-strip">
               <input
                 className="search-input"
-                placeholder="Search polls or options"
+                placeholder="Search polls..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
               />
@@ -1045,10 +889,9 @@ function App() {
               </select>
 
               <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
-                <option value="ending-soon">Ending soon</option>
-                <option value="most-votes">Most votes</option>
+                <option value="ending-soon">Ending Soon</option>
+                <option value="most-votes">Most Votes</option>
                 <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
               </select>
             </div>
           </div>
@@ -1056,12 +899,10 @@ function App() {
           {isBooting ? (
             <div className="empty-state">
               <h4>Loading contract state...</h4>
-              <p>The app is preparing a read account and fetching polls from testnet.</p>
             </div>
           ) : visiblePolls.length === 0 ? (
             <div className="empty-state">
               <h4>No polls found</h4>
-              <p>Create the first on-chain poll to start testing real-time voting.</p>
             </div>
           ) : (
             <div className="poll-grid">
@@ -1080,23 +921,16 @@ function App() {
 
                 return (
                   <article key={poll.id} className="poll-card">
-                    {/* Card header */}
                     <div className="poll-card-head">
                       <span className={`state-pill ${state}`}>{state}</span>
                       <span className="time-pill">{formatTimeLeft(poll.expiresAt)}</span>
                     </div>
 
-                    {/* Question */}
                     <h4>{poll.question}</h4>
                     <p className="poll-meta">
-                      <span>by {shortenAddress(poll.creator)}</span>
-                      <span aria-hidden="true">•</span>
-                      <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
-                      <span aria-hidden="true">•</span>
-                      <span>Poll #{poll.id}</span>
+                      <span>by {shortenAddress(poll.creator)}</span> · <span>{totalVotes} votes</span>
                     </p>
 
-                    {/* Options with vote buttons + progress bars */}
                     <div className="poll-options">
                       {poll.options.map((option, index) => {
                         const votes = poll.votes[index] || 0
@@ -1104,22 +938,21 @@ function App() {
                         const canVote = voteAction.action === 'vote' || voteAction.action === 'connect'
 
                         return (
-                          <div key={`${poll.id}-${option}`} className="poll-option">
+                          <div key={index} className="poll-option">
                             <button
                               className={`poll-option-btn${hasVoted || state === 'closed' ? ' voted' : ''}`}
                               onClick={() =>
                                 voteAction.action === 'connect'
                                   ? handleConnectWallet()
                                   : canVote
-                                    ? handleVote(poll.id, index)
-                                    : undefined
+                                  ? handleVote(poll.id, index)
+                                  : undefined
                               }
                               disabled={voteAction.disabled && voteAction.action !== 'connect'}
                               type="button"
-                              title={voteAction.action === 'connect' ? 'Connect wallet to vote' : undefined}
                             >
                               <span className="poll-option-label">{option}</span>
-                              <span className="poll-option-meta">{votes} · {percentage}%</span>
+                              <span className="poll-option-meta">{votes} ({percentage}%)</span>
                             </button>
                             <div className="poll-option-bar">
                               <div className="poll-option-bar-fill" style={{ width: `${percentage}%` }} />
@@ -1129,26 +962,14 @@ function App() {
                       })}
                     </div>
 
-                    {/* Footer: status hint + owner actions */}
                     <div className="poll-card-footer">
-                        <button
-                          className="ghost-button small"
-                          onClick={() => openPollDetails(poll.id)}
-                          type="button"
-                        >
-                          Details
-                        </button>
-                      {state === 'active' && !wallet?.address && (
-                        <button className="connect-hint" onClick={handleConnectWallet} type="button">
-                          Connect wallet to vote
-                        </button>
-                      )}
-                      {state === 'active' && hasVoted && (
-                        <span className="voted-badge">✓ You voted</span>
-                      )}
-                      {state === 'active' && wallet?.address && !hasVoted && voteAction.action === 'pending' && (
-                        <span className="poll-meta">Submitting…</span>
-                      )}
+                      <button
+                        className="ghost-button small"
+                        onClick={() => openPollDetails(poll.id)}
+                        type="button"
+                      >
+                        Details
+                      </button>
 
                       {isOwner && state === 'active' && (
                         <div className="owner-actions">
@@ -1168,17 +989,6 @@ function App() {
                           </button>
                         </div>
                       )}
-                      {isOwner && state === 'closed' && (
-                        <div className="owner-actions">
-                          <button
-                            className="ghost-button small danger"
-                            onClick={() => handleMenuDeletePoll(poll.id)}
-                            type="button"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </article>
                 )
@@ -1186,172 +996,7 @@ function App() {
             </div>
           )}
         </section>
-
       </main>
-
-      <PollDetailModal
-        poll={selectedPoll}
-        pollState={selectedPollState}
-        totalVotes={selectedPollTotalVotes}
-        hasVoted={selectedPoll ? Boolean(voteLookup[selectedPoll.id]) : false}
-        wallet={wallet}
-        transaction={transaction}
-        isWalletBusy={isWalletBusy}
-        onDismiss={dismissSelectedPoll}
-        onConnect={handleConnectWallet}
-        onClosePoll={handleClosePoll}
-        onDeletePoll={handleMenuDeletePoll}
-        isPollOwner={isPollOwner}
-        getVoteActionState={getVoteActionState}
-        getExplorerLink={getExplorerLink}
-        contractId={CONTRACT_ID}
-        shortenAddress={shortenAddress}
-      />
-    </div>
-  )
-}
-
-function PollDetailModal({
-  poll,
-  pollState,
-  totalVotes,
-  hasVoted,
-  wallet,
-  transaction,
-  isWalletBusy,
-  onDismiss,
-  onConnect,
-  onClosePoll,
-  onDeletePoll,
-  isPollOwner,
-  getVoteActionState,
-  getExplorerLink,
-  contractId,
-  shortenAddress: shorten,
-}) {
-  if (!poll) {
-    return null
-  }
-
-  const isOwner = isPollOwner(poll, wallet?.address)
-  const isClosed = pollState === 'closed'
-  const winningIndex = poll.votes.reduce(
-    (bestIndex, votes, index) => (votes > poll.votes[bestIndex] ? index : bestIndex),
-    0,
-  )
-  const hasAnyVotes = totalVotes > 0
-  const voteAction = getVoteActionState({
-    poll,
-    walletAddress: wallet?.address,
-    hasVoted,
-    transactionPhase: transaction.phase,
-    isWalletBusy,
-  })
-
-  function handleOverlayClick(event) {
-    if (event.target === event.currentTarget) {
-      onDismiss()
-    }
-  }
-
-  return (
-    <div
-      className="modal-overlay"
-      onClick={handleOverlayClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="poll-detail-title"
-    >
-      <div className="modal-card">
-        <div className="modal-head">
-          <div>
-            <p className="section-label">Poll #{poll.id}</p>
-            <h2 id="poll-detail-title">{poll.question}</h2>
-            <p className="detail-meta">
-              Created by <strong>{shorten(poll.creator)}</strong> · {totalVotes} vote{totalVotes !== 1 ? 's' : ''} · {pollState || 'unknown'}
-            </p>
-          </div>
-          <button
-            type="button"
-            className="modal-close"
-            onClick={onDismiss}
-            aria-label="Close poll details"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="detail-summary">
-          <span className={`state-pill ${pollState}`}>{pollState}</span>
-          <span className="time-pill">{formatTimeLeft(poll.expiresAt)}</span>
-          {hasVoted && <span className="voted-badge">✓ You voted</span>}
-        </div>
-
-        <div className="results-stack">
-          {poll.options.map((option, index) => {
-            const votes = poll.votes[index] || 0
-            const percentage = totalVotes === 0 ? 0 : Math.round((votes / totalVotes) * 100)
-            const isWinner = hasAnyVotes && !isClosed && index === winningIndex
-            const rowClasses = ['result-row', isWinner ? 'winner' : '']
-              .filter(Boolean)
-              .join(' ')
-
-            return (
-              <div key={`detail-${poll.id}-${index}`} className={rowClasses}>
-                <div className="result-copy">
-                  <span>{option}</span>
-                  <span>{votes} · {percentage}%</span>
-                </div>
-                <div className="result-bar-shell">
-                  <div className="result-bar-fill" style={{ width: `${percentage}%` }} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="detail-footer">
-          <div>
-            {!wallet?.address && !isClosed && (
-              <button type="button" className="primary-button" onClick={onConnect} disabled={isWalletBusy}>
-                {isWalletBusy ? 'Opening wallets…' : 'Connect wallet to vote'}
-              </button>
-            )}
-            {wallet?.address && !isClosed && !hasVoted && voteAction.action === 'vote' && (
-              <p className="detail-note">Pick an option in the poll card, or use the controls on each row above.</p>
-            )}
-            {isClosed && (
-              <p className="detail-note">This poll is closed. No further votes are accepted on-chain.</p>
-            )}
-            {hasVoted && !isClosed && (
-              <p className="detail-note">Thanks for voting! Your choice is recorded on the Stellar testnet.</p>
-            )}
-          </div>
-
-          <div className="detail-head-actions">
-            {contractId && (
-              <a
-                className="inline-link"
-                href={getExplorerLink('contract', contractId)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                View contract
-              </a>
-            )}
-            {isOwner && !isClosed && (
-              <button type="button" className="secondary-button small" onClick={() => onClosePoll(poll.id)}>
-                Close poll
-              </button>
-            )}
-            {isOwner && (
-              <button type="button" className="ghost-button small danger" onClick={() => onDeletePoll(poll.id)}>
-                Delete
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
