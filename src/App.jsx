@@ -252,22 +252,34 @@ function App() {
   const [lastSyncedAt, setLastSyncedAt] = useState(null)
   const [transaction, setTransaction] = useState({ phase: 'idle' })
   const [recentEvents, setRecentEvents] = useState([])
-const eventCursorRef = useRef(null)
+  const eventCursorRef = useRef(null)
   const refreshPollStateRef = useRef(null)
   const syncFromEventsRef = useRef(null)
   const dismissSelectedPollRef = useRef(null)
   const deferredSearch = useDeferredValue(searchQuery)
 
-  const createPollAction = useMemo(
-    () =>
-      getCreatePollActionState({
-        walletAddress: wallet?.address,
-        transactionPhase: transaction.phase,
-        isWalletBusy,
-      }),
-    [isWalletBusy, transaction.phase, wallet?.address],
-
+  const selectedPoll = useMemo(
+    () => polls.find((poll) => poll.id === selectedPollId) || null,
+    [polls, selectedPollId],
   )
+
+  const selectedPollResults = useMemo(() => {
+    if (!selectedPoll) return []
+
+    const totalVotes = selectedPoll.votes.reduce((sum, vote) => sum + vote, 0)
+    const highestVoteCount = Math.max(0, ...selectedPoll.votes)
+
+    return selectedPoll.options.map((option, index) => {
+      const votes = selectedPoll.votes[index] || 0
+
+      return {
+        option,
+        votes,
+        percentage: totalVotes === 0 ? 0 : Math.round((votes / totalVotes) * 100),
+        isWinner: totalVotes > 0 && votes === highestVoteCount,
+      }
+    })
+  }, [selectedPoll])
 
   const createPollAction = useMemo(
     () =>
@@ -680,6 +692,79 @@ const eventCursorRef = useRef(null)
           <span>{notice.message}</span>
         </section>
       )}
+
+      {selectedPoll && (
+        <div
+          className="modal-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) dismissSelectedPoll()
+          }}
+        >
+          <section
+            aria-labelledby="poll-details-title"
+            aria-modal="true"
+            className="modal-card"
+            role="dialog"
+          >
+            <div className="modal-head">
+              <div>
+                <p className="section-label">Poll #{selectedPoll.id}</p>
+                <h2 id="poll-details-title">{selectedPoll.question}</h2>
+              </div>
+              <button
+                aria-label="Close poll details"
+                className="modal-close"
+                onClick={dismissSelectedPoll}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="detail-summary">
+              <span className={`state-pill ${getPollState(selectedPoll)}`}>
+                {getPollState(selectedPoll)}
+              </span>
+              <span className="time-pill">{formatTimeLeft(selectedPoll.expiresAt)}</span>
+            </div>
+            <p className="detail-meta">
+              Created by {shortenAddress(selectedPoll.creator)} on {formatDateTime(selectedPoll.createdAt)}
+            </p>
+
+            <div className="results-stack">
+              {selectedPollResults.map((result, index) => (
+                <div
+                  className={`result-row${result.isWinner ? ' winner' : ''}`}
+                  key={`${selectedPoll.id}-${index}`}
+                >
+                  <div className="result-copy">
+                    <span>{result.option}</span>
+                    <span>{result.votes} votes ({result.percentage}%)</span>
+                  </div>
+                  <div className="result-bar-shell">
+                    <div className="result-bar-fill" style={{ width: `${result.percentage}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="detail-footer">
+              <p className="detail-note">
+                Results are read from the deployed poll contract on Stellar Testnet.
+              </p>
+              <a
+                className="secondary-button"
+                href={getExplorerLink('contract', CONTRACT_ID)}
+                rel="noreferrer"
+                target="_blank"
+              >
+                View contract
+              </a>
+            </div>
+          </section>
+        </div>
+      )}
+
 
       {bootError && (
         <section className="notice error">
