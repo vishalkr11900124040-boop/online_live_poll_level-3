@@ -263,10 +263,6 @@ function App() {
     () => polls.find((poll) => poll.id === selectedPollId) || null,
     [polls, selectedPollId],
   )
-  const selectedPollState = selectedPoll ? getPollState(selectedPoll) : null
-  const selectedPollTotalVotes = selectedPoll
-    ? selectedPoll.votes.reduce((sum, vote) => sum + vote, 0)
-    : 0
 
   const createPollAction = useMemo(
     () =>
@@ -315,18 +311,26 @@ function App() {
     return { totalPolls: polls.length, activePolls, totalVotes }
   }, [polls])
 
-  useEffect(() => {
-    if (!notice) return undefined
-    const timer = window.setTimeout(() => setNotice(null), 5000)
-    return () => window.clearTimeout(timer)
-  }, [notice])
-
-  useEffect(() => {
-    writeCachedPolls(polls)
-  }, [polls])
-
   function showNotice(type, title, message) {
     setNotice({ type, title, message })
+  }
+
+  function clearPollHash() {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
+  }
+
+  function setPollHash(pollId) {
+    window.history.replaceState(null, '', `#poll-${pollId}`)
+  }
+
+  function openPollDetails(pollId) {
+    setSelectedPollId(pollId)
+    setPollHash(pollId)
+  }
+
+  function dismissSelectedPoll() {
+    setSelectedPollId(null)
+    clearPollHash()
   }
 
   function handleFailure(error, txPhase = 'error') {
@@ -393,9 +397,19 @@ function App() {
         await refreshPollState({ silent: true })
       }
     } catch {
-      // Background event sync errors ignore silent failures
+      // Background event sync silent failure
     }
   }
+
+  useEffect(() => {
+    if (!notice) return undefined
+    const timer = window.setTimeout(() => setNotice(null), 5000)
+    return () => window.clearTimeout(timer)
+  }, [notice])
+
+  useEffect(() => {
+    writeCachedPolls(polls)
+  }, [polls])
 
   useEffect(() => {
     refreshPollStateRef.current = refreshPollState
@@ -449,24 +463,6 @@ function App() {
     }
   }, [selectedPollId])
 
-  function setPollHash(pollId) {
-    window.history.replaceState(null, '', `#poll-${pollId}`)
-  }
-
-  function clearPollHash() {
-    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
-  }
-
-  function openPollDetails(pollId) {
-    setSelectedPollId(pollId)
-    setPollHash(pollId)
-  }
-
-  function dismissSelectedPoll() {
-    setSelectedPollId(null)
-    clearPollHash()
-  }
-
   async function handleConnectWallet() {
     setIsWalletBusy(true)
     try {
@@ -493,11 +489,6 @@ function App() {
 
   function updateTransactionStatus(update) {
     setTransaction((current) => ({ ...current, ...update }))
-  }
-
-  async function handleMenuDeletePoll(pollId) {
-    if (!window.confirm(`Delete poll #${pollId}? This will remove it from the contract.`)) return
-    await handleDeletePoll(pollId)
   }
 
   async function runContractWrite(method, args, successTitle, successMessage) {
@@ -605,6 +596,11 @@ function App() {
         clearPollHash()
       }
     }
+  }
+
+  async function handleMenuDeletePoll(pollId) {
+    if (!window.confirm(`Delete poll #${pollId}? This will remove it from the contract.`)) return
+    await handleDeletePoll(pollId)
   }
 
   function addOption() {
@@ -754,7 +750,7 @@ function App() {
             <div className="panel-head">
               <div>
                 <p className="section-label">New Poll</p>
-                3<h3>Create On-Chain Poll</h3>
+                <h3>Create On-Chain Poll</h3>
               </div>
             </div>
 
