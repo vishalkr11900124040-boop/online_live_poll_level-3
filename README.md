@@ -5,8 +5,8 @@ LivePoll is a mini end-to-end Stellar + Soroban dApp: a multi-wallet polling app
 ## Level 3 Submission Checklist (fill before submitting)
 
 - Live demo link: https://online-live-poll-three.vercel.app/
-- Demo video (1 minute) link: https://drive.google.com/file/d/1mFznU8JuuxYWcu140-rXJpEqO5WCSTW_/view?usp=sharing Test output screenshot (3+ passing tests): ✅ (see below)
-- Public GitHub repo link: https://github.com/awanind5924-alt/online-live-poll-3
+- Demo video (1 minute) link: https://drive.google.com/file/d/1Sh3bbCZ0AnWxyrXXdl6EpDmLfmiEUJqn/view?usp=sharingTest output screenshot (3+ passing tests): ✅ (see below)
+- Public GitHub repo link: https://github.com/vishalkr11900124040-boop/online_live_poll_level-3
 - 3+ meaningful commits for Level 3: ✅
 
 
@@ -35,7 +35,7 @@ This project demonstrates:
 ## Screenshots
 
 🏠 Home Page
-      ![Screenshot 2026-06-18 210151.png](screenshot/Screenshot%202026-06-18%20210151.png)
+      
 📝 Create Poll
       ![Screenshot 2026-06-18 210214.png](screenshot/Screenshot%202026-06-18%20210214.png)
 🗳️ Voting
