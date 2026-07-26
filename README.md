@@ -34,15 +34,17 @@ This project demonstrates:
 
 ## Screenshots
 
-🏠 Home Page
-    https://github.com/vishalkr11900124040-boop/online_live_poll_level-3/blob/main/Screenshot%202026-07-25%20163514.png?raw=true  
-📝 Create Poll
-      ![Screenshot 2026-06-18 210214.png](screenshot/Screenshot%202026-06-18%20210214.png)
-🗳️ Voting
-    ![Screenshot 2026-06-18 210545.png](screenshot/Screenshot%202026-06-18%20210545.png)
-✅ CI/CD
-    ![Screenshot 2026-06-18 205459.png](screenshot/Screenshot%202026-06-18%20205459.png)
+### 🏠 Home Page
+![Home Page]()
 
+### 🔗 Connect Wallet
+![Connect Wallet](images/wallet-connect.png)
+
+### 📝 Create Poll
+![Create Poll](images/create-poll.png)
+
+### 🗳️ Vote on Poll
+![Voting](images/voting.png)
 ## Mobile responsive screenshots
 
 Below is a mobile view screenshot demonstrating the responsive layout on narrow screens. Replace the placeholder with a real phone-sized screenshot captured from the dev tools or a device.
