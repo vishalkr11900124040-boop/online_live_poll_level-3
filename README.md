@@ -35,7 +35,7 @@ This project demonstrates:
 ## Screenshots
 
 ### 🏠 Home Page
-![Home Page]()
+![Home Page](https://github.com/vishalkr11900124040-boop/online_live_poll_level-3/blob/main/images/Screenshot%202026-07-25%20163514.png?raw=true)
 
 ### 🔗 Connect Wallet
 ![Connect Wallet](images/wallet-connect.png)
