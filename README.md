@@ -46,7 +46,7 @@ This project demonstrates:
 
 Below is a mobile view screenshot demonstrating the responsive layout on narrow screens. Replace the placeholder with a real phone-sized screenshot captured from the dev tools or a device.
 
-![Mbile responsive screenshot]()
+![Mbile responsive screenshot](https://github.com/vishalkr11900124040-boop/online_live_poll_level-3/blob/main/images/WhatsApp%20Image%202026-07-25%20at%204.40.21%20PM.jpeg?raw=true)
 
 
 ## Deployed Contract
