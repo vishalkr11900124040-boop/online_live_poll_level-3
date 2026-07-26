@@ -44,7 +44,7 @@ This project demonstrates:
 ![Voting](https://github.com/vishalkr11900124040-boop/online_live_poll_level-3/blob/main/images/Screenshot%202026-07-25%20163630.png?raw=true)
 
 ✅ CI/CD
-    ![frontend / contract]()
+    ![frontend / contract](https://github.com/vishalkr11900124040-boop/online_live_poll_level-3/blob/main/images/Screenshot%202026-07-25%20163905.png?raw=true)
 
 ## Mobile responsive screenshots
 
