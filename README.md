@@ -38,7 +38,7 @@ This project demonstrates:
 ![Home Page](https://github.com/vishalkr11900124040-boop/online_live_poll_level-3/blob/main/images/Screenshot%202026-07-25%20163514.png?raw=true)
 
 ### 📝 Create Poll
-![Create Poll](images/create-poll.png)
+![Create Poll](https://github.com/vishalkr11900124040-boop/online_live_poll_level-3/blob/main/images/Screenshot%202026-07-25%20163701.png?raw=true)
 
 ### 🗳️ Vote on Poll
 ![Voting](https://github.com/vishalkr11900124040-boop/online_live_poll_level-3/blob/main/images/Screenshot%202026-07-25%20163630.png?raw=true)
@@ -46,7 +46,7 @@ This project demonstrates:
 
 Below is a mobile view screenshot demonstrating the responsive layout on narrow screens. Replace the placeholder with a real phone-sized screenshot captured from the dev tools or a device.
 
-![WhatsApp Image 2026-06-18 at 9.07.51 PM.jpeg](screenshot/WhatsApp%20Image%202026-06-18%20at%209.07.51%20PM.jpeg)
+![Mbile responsive screenshot]()
 
 
 ## Deployed Contract
