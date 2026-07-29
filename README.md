@@ -10,27 +10,68 @@ LivePoll is a mini end-to-end Stellar + Soroban dApp: a multi-wallet polling app
 - 3+ meaningful commits for Level 3: ✅
 
 
-## Submission Overview
+## Submission Evidence — Include These Files
 
-This project demonstrates:
+> **Important:** The complete folders below must be included in the submitted repository/archive. This README documents the implementation, but it does not replace the source files required to verify it.
 
-- Multi-wallet integration with `StellarWalletsKit`
-- Smart contract deployment on Stellar Testnet
-- Contract reads and writes from the frontend
-- Real-time event polling and state synchronization
-- Visible transaction lifecycle feedback
-- Wallet error handling for missing wallet, rejected request, and insufficient balance
-- Loading states and progress indicators during reads/writes
-- Basic caching of recently loaded poll data in `localStorage`
-- Automated tests for core helper logic
+| Requirement | Source evidence to include | What it verifies |
+| --- | --- | --- |
+| Wallet connection | `src/lib/stellar.js` | `StellarWalletsKit` setup and wallet connection logic |
+| Soroban contract structure and logic | `poll_contract/Cargo.toml`, `poll_contract/src/lib.rs` | Contract crate, poll storage, and contract entry points |
+| Frontend-to-contract integration | `src/lib/stellar.js` and the React components under `src/` | RPC calls, contract invocation, signing, and UI state updates |
+| Contract artifact | `public/contracts/poll_contract.wasm` | Compiled WASM/spec used by the frontend at runtime |
+| Contract build/deploy flow | `scripts/` and `package.json` | Build, WASM sync, and Testnet deployment commands |
+| Automated verification | `tests/` | Tests for frontend helper logic |
+
+For review, do **not** submit only built assets, screenshots, or this README. Include the `poll_contract/`, `src/`, `scripts/`, and `tests/` directories as source-controlled files.
+
+## What Can Be Verified from the Source
+
+1. **Wallet support:** `src/lib/stellar.js` configures `StellarWalletsKit` for compatible wallets, including Freighter, xBull, Albedo, Rabet, Lobstr, Hana, Hot Wallet, and Klever.
+2. **Contract implementation:** `poll_contract/src/lib.rs` contains the Soroban contract code for creating, voting on, closing, reading, and deleting polls.
+3. **Contract calls in the frontend:** `src/lib/stellar.js` constructs and submits Soroban RPC transactions for the same public contract operations exposed in the UI.
+4. **UI/contract matching:** React components call the integration helpers for create, vote, close, delete, and read actions; the event sync refreshes the displayed poll state.
+5. **Runtime contract specification:** `npm run wasm:sync` copies the compiled contract WASM to `public/contracts/poll_contract.wasm`, which the frontend uses to load the contract specification.
+
+## Submission Verification Steps
+
+From the project root, a reviewer can verify the required evidence with:
+
+```bash
+# Confirm that the required source files are present
+test -f poll_contract/src/lib.rs
+test -f src/lib/stellar.js
+
+# Inspect the contract entry points and frontend integration
+rg "create_poll|vote|close_poll|delete_poll" poll_contract/src/lib.rs src/lib/stellar.js
+rg "StellarWalletsKit" src/lib/stellar.js
+
+# Build the contract and frontend, then run the test suite
+npm install
+npm run contract:build
+npm run wasm:sync
+npm test
+npm run build
+```
+
+On Windows PowerShell, use the following source-presence check instead of `test -f`:
+
+```powershell
+Test-Path poll_contract/src/lib.rs
+Test-Path src/lib/stellar.js
+```
 
 ## Key Features
 
-- Connect with supported Stellar wallets including Freighter, xBull, Albedo, Rabet, Lobstr, Hana, Hot Wallet, and Klever
-- Create, vote on, close, and delete polls through frontend contract calls
-- Browse contract data in read-only mode even without a connected wallet
-- See transaction phases in the UI: `preparing`, `awaiting-signature`, `pending`, `success`, and `error`
-- Refresh poll state automatically from recent on-chain contract events
+- Multi-wallet integration with `StellarWalletsKit`
+- Soroban smart-contract reads and writes on Stellar Testnet
+- Create, vote on, close, delete, and browse polls
+- Read-only poll browsing without a connected wallet
+- Transaction phases: `preparing`, `awaiting-signature`, `pending`, `success`, and `error`
+- Wallet error handling for missing wallet, rejected requests, and insufficient balance
+- Event polling and state synchronization
+- `localStorage` caching for recently loaded poll data
+- Automated tests for core helper logic
 
 ## Screenshots
 
